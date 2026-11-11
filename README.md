@@ -8,8 +8,6 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 The contact form submits directly to Web3Forms using the access key in
 `src/components/ContactSection.vue`. The key is included in the public
-client-side bundle. The form requires a Google reCAPTCHA v2 checkbox in the
-browser. This client-side check can be bypassed: Web3Forms documents server-side
-reCAPTCHA verification for v3 only (a Pro feature). Configure a supported
-server-verified CAPTCHA in Web3Forms for actual spam protection. The Google
-site key must allow the domain on which the form is hosted.
+client-side bundle. The form uses the Web3Forms free-plan hCaptcha site key.
+In the Web3Forms dashboard, select the form and enable hCaptcha as the
+preferred CAPTCHA (Block Spam setting) so submissions are verified server-side.

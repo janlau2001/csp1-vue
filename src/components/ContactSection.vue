@@ -5,79 +5,79 @@ import 'notyf/notyf.min.css'
 
 const emailAddress = 'janlaurenceolarte070101@gmail.com'
 const WEB3FORMS_ACCESS_KEY = 'c3f83bc0-f765-4b3b-bb3e-9666a50c7dc1'
-const SITE_KEY = '6LeDvxouAAAAAE2-g_VH0CzWKKEWNhXTx3NWeh7s'
+const HCAPTCHA_SITE_KEY = '50b2fe65-b00b-4b9e-ad62-3ba471098be2'
 const name = ref('')
 const email = ref('')
 const message = ref('')
 const copyStatus = ref('')
 const isLoading = ref(false)
 const submitError = ref('')
-const recaptchaContainer = ref(null)
-const recaptchaWidgetId = ref(null)
-const recaptchaToken = ref('')
-const recaptchaError = ref('')
+const captchaContainer = ref(null)
+const captchaWidgetId = ref(null)
+const captchaToken = ref('')
+const captchaError = ref('')
 let notyf
-let recaptchaTimeout
+let captchaTimeout
 
-function showRecaptchaError() {
-	clearTimeout(recaptchaTimeout)
-	recaptchaToken.value = ''
-	recaptchaError.value = 'Could not load reCAPTCHA. Please reload the page and try again.'
-	console.error('Could not load or verify reCAPTCHA.')
+function showCaptchaError(error) {
+	clearTimeout(captchaTimeout)
+	captchaToken.value = ''
+	captchaError.value = 'Could not load or verify hCaptcha. Please reload the page and try again.'
+	console.error('Could not load or verify hCaptcha:', error)
 }
 
-function renderRecaptcha() {
-	if (recaptchaWidgetId.value !== null) return
-	if (!window.grecaptcha || !window.grecaptcha.render) {
-		showRecaptchaError()
+function renderCaptcha() {
+	if (captchaWidgetId.value !== null) return
+	if (!window.hcaptcha || !window.hcaptcha.render) {
+		showCaptchaError('hCaptcha API is unavailable.')
 		return
 	}
 
 	try {
-		recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
-			sitekey: SITE_KEY,
+		captchaWidgetId.value = window.hcaptcha.render(captchaContainer.value, {
+			sitekey: HCAPTCHA_SITE_KEY,
+			size: 'compact',
 			callback: token => {
-				recaptchaToken.value = token
-				recaptchaError.value = ''
+				captchaToken.value = token
+				captchaError.value = ''
 			},
-			'expired-callback': () => { recaptchaToken.value = '' },
-			'error-callback': showRecaptchaError,
+			'expired-callback': () => { captchaToken.value = '' },
+			'error-callback': showCaptchaError,
 		})
-		recaptchaError.value = ''
-		clearTimeout(recaptchaTimeout)
+		captchaError.value = ''
+		clearTimeout(captchaTimeout)
 	} catch (error) {
-		console.error('Could not render reCAPTCHA:', error)
-		showRecaptchaError()
+		showCaptchaError(error)
 	}
 }
 
-function resetRecaptcha() {
-	recaptchaToken.value = ''
-	if (recaptchaWidgetId.value !== null && window.grecaptcha) {
-		window.grecaptcha.reset(recaptchaWidgetId.value)
+function resetCaptcha() {
+	captchaToken.value = ''
+	if (captchaWidgetId.value !== null && window.hcaptcha) {
+		window.hcaptcha.reset(captchaWidgetId.value)
 	}
 }
 
 onMounted(() => {
 	notyf = new Notyf({ position: { x: 'left', y: 'bottom' }, dismissible: true })
-	const script = document.getElementById('recaptcha-script')
-	if (window.grecaptcha && window.grecaptcha.render) {
-		renderRecaptcha()
+	const script = document.getElementById('hcaptcha-script')
+	window.addEventListener('hcaptcha-ready', renderCaptcha)
+	if (window.hcaptchaReady) {
+		renderCaptcha()
 	} else if (script) {
-		script.addEventListener('load', renderRecaptcha)
-		script.addEventListener('error', showRecaptchaError)
-		recaptchaTimeout = setTimeout(showRecaptchaError, 15000)
+		script.addEventListener('error', showCaptchaError)
+		captchaTimeout = setTimeout(() => showCaptchaError('Loading timed out.'), 15000)
 	} else {
-		showRecaptchaError()
+		showCaptchaError('hCaptcha script is missing.')
 	}
 })
 
 onBeforeUnmount(() => {
-	clearTimeout(recaptchaTimeout)
-	const script = document.getElementById('recaptcha-script')
+	clearTimeout(captchaTimeout)
+	window.removeEventListener('hcaptcha-ready', renderCaptcha)
+	const script = document.getElementById('hcaptcha-script')
 	if (script) {
-		script.removeEventListener('load', renderRecaptcha)
-		script.removeEventListener('error', showRecaptchaError)
+		script.removeEventListener('error', showCaptchaError)
 	}
 })
 
@@ -85,7 +85,7 @@ async function submitForm() {
 	if (isLoading.value) return
 
 	submitError.value = ''
-	if (!recaptchaToken.value) {
+	if (!captchaToken.value) {
 		notyf.error('Please verify that you are not a robot.')
 		return
 	}
@@ -104,7 +104,7 @@ async function submitForm() {
 				name: name.value,
 				email: email.value,
 				message: message.value,
-				'g-recaptcha-response': recaptchaToken.value,
+				'h-captcha-response': captchaToken.value,
 			}),
 		})
 		const result = await response.json()
@@ -121,7 +121,7 @@ async function submitForm() {
 		submitError.value = 'Failed to send your message. Please try again or use the email address below.'
 	} finally {
 		isLoading.value = false
-		resetRecaptcha()
+		resetCaptcha()
 	}
 }
 
@@ -191,9 +191,9 @@ async function copyAddress() {
 								<textarea id="contact-message" v-model="message" class="form-control form-control-custom" rows="4" placeholder="Message me here anytime, and anywhere" :disabled="isLoading" required></textarea>
 							</div>
 
-							<div class="mb-4 recaptcha-wrapper">
-								<div ref="recaptchaContainer"></div>
-								<p v-if="recaptchaError" class="response-time-text mt-2" role="alert">{{ recaptchaError }}</p>
+							<div class="mb-4 captcha-wrapper">
+								<div ref="captchaContainer"></div>
+								<p v-if="captchaError" class="response-time-text mt-2" role="alert">{{ captchaError }}</p>
 							</div>
 
 							<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">

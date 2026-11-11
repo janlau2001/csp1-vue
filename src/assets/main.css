@@ -464,7 +464,7 @@ body {
     color: var(--text-muted);
 }
 
-.recaptcha-wrapper {
+.captcha-wrapper {
     overflow-x: auto;
 }
 
