@@ -464,6 +464,10 @@ body {
     color: var(--text-muted);
 }
 
+.recaptcha-wrapper {
+    overflow-x: auto;
+}
+
 .divider-container {
     position: relative;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -654,4 +658,3 @@ body {
 .inner-description-card:hover .upcoming-card-img {
     transform: scale(1.05);
 }
-

@@ -1,16 +1,128 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { Notyf } from 'notyf'
+import 'notyf/notyf.min.css'
 
 const emailAddress = 'janlaurenceolarte070101@gmail.com'
+const WEB3FORMS_ACCESS_KEY = 'c3f83bc0-f765-4b3b-bb3e-9666a50c7dc1'
+const SITE_KEY = '6LeDvxouAAAAAE2-g_VH0CzWKKEWNhXTx3NWeh7s'
 const name = ref('')
 const email = ref('')
 const message = ref('')
 const copyStatus = ref('')
+const isLoading = ref(false)
+const submitError = ref('')
+const recaptchaContainer = ref(null)
+const recaptchaWidgetId = ref(null)
+const recaptchaToken = ref('')
+const recaptchaError = ref('')
+let notyf
+let recaptchaTimeout
 
-function composeMessage() {
-	const subject = encodeURIComponent(`Portfolio message from ${name.value}`)
-	const body = encodeURIComponent(`Name: ${name.value}\nEmail: ${email.value}\n\n${message.value}`)
-	window.location.href = `mailto:${emailAddress}?subject=${subject}&body=${body}`
+function showRecaptchaError() {
+	clearTimeout(recaptchaTimeout)
+	recaptchaToken.value = ''
+	recaptchaError.value = 'Could not load reCAPTCHA. Please reload the page and try again.'
+	console.error('Could not load or verify reCAPTCHA.')
+}
+
+function renderRecaptcha() {
+	if (recaptchaWidgetId.value !== null) return
+	if (!window.grecaptcha || !window.grecaptcha.render) {
+		showRecaptchaError()
+		return
+	}
+
+	try {
+		recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
+			sitekey: SITE_KEY,
+			callback: token => {
+				recaptchaToken.value = token
+				recaptchaError.value = ''
+			},
+			'expired-callback': () => { recaptchaToken.value = '' },
+			'error-callback': showRecaptchaError,
+		})
+		recaptchaError.value = ''
+		clearTimeout(recaptchaTimeout)
+	} catch (error) {
+		console.error('Could not render reCAPTCHA:', error)
+		showRecaptchaError()
+	}
+}
+
+function resetRecaptcha() {
+	recaptchaToken.value = ''
+	if (recaptchaWidgetId.value !== null && window.grecaptcha) {
+		window.grecaptcha.reset(recaptchaWidgetId.value)
+	}
+}
+
+onMounted(() => {
+	notyf = new Notyf({ position: { x: 'left', y: 'bottom' }, dismissible: true })
+	const script = document.getElementById('recaptcha-script')
+	if (window.grecaptcha && window.grecaptcha.render) {
+		renderRecaptcha()
+	} else if (script) {
+		script.addEventListener('load', renderRecaptcha)
+		script.addEventListener('error', showRecaptchaError)
+		recaptchaTimeout = setTimeout(showRecaptchaError, 15000)
+	} else {
+		showRecaptchaError()
+	}
+})
+
+onBeforeUnmount(() => {
+	clearTimeout(recaptchaTimeout)
+	const script = document.getElementById('recaptcha-script')
+	if (script) {
+		script.removeEventListener('load', renderRecaptcha)
+		script.removeEventListener('error', showRecaptchaError)
+	}
+})
+
+async function submitForm() {
+	if (isLoading.value) return
+
+	submitError.value = ''
+	if (!recaptchaToken.value) {
+		notyf.error('Please verify that you are not a robot.')
+		return
+	}
+
+	isLoading.value = true
+	try {
+		const response = await fetch('https://api.web3forms.com/submit', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
+			},
+			body: JSON.stringify({
+				access_key: WEB3FORMS_ACCESS_KEY,
+				subject: `Portfolio message from ${name.value}`,
+				name: name.value,
+				email: email.value,
+				message: message.value,
+				'g-recaptcha-response': recaptchaToken.value,
+			}),
+		})
+		const result = await response.json()
+		if (!response.ok || result.success !== true) {
+			throw new Error(result.message || `Web3Forms request failed (${response.status})`)
+		}
+
+		notyf.success('Message sent!')
+		name.value = ''
+		email.value = ''
+		message.value = ''
+	} catch (error) {
+		console.error('Could not send contact message:', error)
+		submitError.value = 'Failed to send your message. Please try again or use the email address below.'
+	} finally {
+		isLoading.value = false
+		resetRecaptcha()
+	}
 }
 
 async function copyAddress() {
@@ -63,28 +175,33 @@ async function copyAddress() {
 
 					<!-- Right Column: Form & Direct Contact -->
 					<div class="col-lg-8 ps-lg-4">
-						<form @submit.prevent="composeMessage">
+						<form @submit.prevent="submitForm">
 							<div class="mb-3">
 								<label for="contact-name" class="form-label-custom">NAME</label>
-								<input id="contact-name" v-model="name" type="text" class="form-control form-control-custom" placeholder="e.g. John Doe" required>
+								<input id="contact-name" v-model="name" type="text" class="form-control form-control-custom" placeholder="e.g. John Doe" :disabled="isLoading" required>
 							</div>
 
 							<div class="mb-3">
 								<label for="contact-email" class="form-label-custom">DETAILS / EMAIL</label>
-								<input id="contact-email" v-model="email" type="email" class="form-control form-control-custom" placeholder="e.g. johndoe@sample.com" required>
+								<input id="contact-email" v-model="email" type="email" class="form-control form-control-custom" placeholder="e.g. johndoe@sample.com" :disabled="isLoading" required>
 							</div>
 
 							<div class="mb-4">
 								<label for="contact-message" class="form-label-custom">MESSAGE</label>
-								<textarea id="contact-message" v-model="message" class="form-control form-control-custom" rows="4" placeholder="Message me here anytime, and anywhere" required></textarea>
+								<textarea id="contact-message" v-model="message" class="form-control form-control-custom" rows="4" placeholder="Message me here anytime, and anywhere" :disabled="isLoading" required></textarea>
+							</div>
+
+							<div class="mb-4 recaptcha-wrapper">
+								<div ref="recaptchaContainer"></div>
+								<p v-if="recaptchaError" class="response-time-text mt-2" role="alert">{{ recaptchaError }}</p>
 							</div>
 
 							<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-								<button type="submit" class="btn btn-white-pill px-4 py-2">SEND MESSAGE</button>
+								<button type="submit" class="btn btn-white-pill px-4 py-2" :disabled="isLoading">{{ isLoading ? 'SENDING...' : 'SEND MESSAGE' }}</button>
 								<span class="response-time-text">Typical response: &lt; 24h</span>
 							</div>
 						</form>
-						<p class="response-time-text">Sending opens your email app so you can review and send your message.</p>
+						<p v-if="submitError" class="response-time-text" role="alert">{{ submitError }}</p>
 
 						<div class="divider-container my-4 text-center">
 							<span class="divider-text">OR REACH OUT DIRECTLY</span>
