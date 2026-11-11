@@ -1,0 +1,82 @@
+{
+  "featured": [
+    {
+      "id": "livesflow",
+      "title": "LivesFlow",
+      "subtitle": "LARAVEL & VERCEL",
+      "image": "Project1.png",
+      "imageOnRight": false,
+      "description": "Designed and built an all-in-one CRM platform for financial advisors. Track prospects through every pipeline stage, schedule meetings, monitor team performance, and close more sales—all in one place.",
+      "metrics": [
+        { "value": "+42%", "label": "Workflow Velocity" },
+        { "value": "1k+", "label": "Active Advisers" },
+        { "value": "99.9%", "label": "Crash-Free SLA" }
+      ],
+      "url": "https://livesflow.com/"
+    },
+    {
+      "id": "guidance",
+      "title": "Guidance Counseling System",
+      "subtitle": "GUIDANCE SYSTEM & LOGIN",
+      "image": "Guidance.png",
+      "imageOnRight": true,
+      "description": "Created a Guidance Counseling and Record Tracking system for St. Paul University Philippines. This tracks all records of individual upcoming and enrolled students in the university.",
+      "metrics": [
+        { "value": "8k+", "label": "Student Records" },
+        { "value": "12", "label": "Guidance Teams" },
+        { "value": "99.99%", "label": "Reliability Rating" }
+      ],
+      "url": "https://guidance-counseling.spup-ict.com/"
+    }
+  ],
+  "upcoming": [
+    {
+      "id": "upcoming-1",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    },
+    {
+      "id": "upcoming-2",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    },
+    {
+      "id": "upcoming-3",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    },
+    {
+      "id": "upcoming-4",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    },
+    {
+      "id": "upcoming-5",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    },
+    {
+      "id": "upcoming-6",
+      "title": "BAHALA NA KUNG ANO MAISIP",
+      "subtitle": "SECRET",
+      "image": "soon.jpg",
+      "imageAlt": "Available soon",
+      "description": "Developer currently organizing his files, content will be available soon. Thank you for your patience."
+    }
+  ]
+}
